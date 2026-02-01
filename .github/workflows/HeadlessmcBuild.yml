@@ -32,6 +32,6 @@ jobs:
       with:
         name: HeadlessMC-Artifacts
         path: |
-          **/build/libs/*.jar
-          !buildSrc/**
+          **/build/libs/headlessmc-launcher-wrapper-2.8.0.jar
+          
           
