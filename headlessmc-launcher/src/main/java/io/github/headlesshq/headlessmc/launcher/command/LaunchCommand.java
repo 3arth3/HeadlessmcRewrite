@@ -87,7 +87,8 @@ public class LaunchCommand extends AbstractDownloadingVersionCommand {
 
                 throw new AuthException("You can't play the game without an account! Please use the login command.");
             } else {
-                if (ctx.getConfig().get(LauncherProperties.REFRESH_ON_GAME_LAUNCH, true)) {
+                // Skip refresh for offline accounts (session is null)
+                if (account.getSession() != null && ctx.getConfig().get(LauncherProperties.REFRESH_ON_GAME_LAUNCH, true)) {
                     try {
                         account = ctx.getAccountManager().refreshAccount(account, ctx.getConfig());
                     } catch (AuthException e) {
@@ -105,6 +106,18 @@ public class LaunchCommand extends AbstractDownloadingVersionCommand {
     }
 
     private LaunchAccount toLaunchAccount(ValidatedAccount account) {
+        // Support for offline accounts where session is null
+        if (account.getSession() == null) {
+            return new LaunchAccount(
+                "offline",
+                account.getName(),
+                account.getUuid(),
+                "offline",
+                account.getXuid()
+            );
+        }
+
+        // Standard logic for premium accounts
         return new LaunchAccount("msa",
                 account.getSession().getMcProfile().getName(),
                 account.getSession().getMcProfile().getId().toString(),
@@ -113,3 +126,4 @@ public class LaunchCommand extends AbstractDownloadingVersionCommand {
     }
 
 }
+            
