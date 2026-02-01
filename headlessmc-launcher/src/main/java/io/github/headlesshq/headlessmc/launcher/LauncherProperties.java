@@ -58,6 +58,7 @@ public interface LauncherProperties extends HmcProperties {
     Property<String> OFFLINE_USERNAME = string("hmc.offline.username");
     Property<String> OFFLINE_UUID = string("hmc.offline.uuid");
     Property<String> OFFLINE_TOKEN = string("hmc.offline.token");
+    Property<String> OFFLINE_ACCOUNT_PREFIX = string("hmc.offline.account");
 
     Property<Long> ASSETS_DELAY = number("hmc.assets.delay");
     Property<Long> ASSETS_RETRIES = number("hmc.assets.retries");
