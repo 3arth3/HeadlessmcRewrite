@@ -8,12 +8,13 @@ import io.github.headlesshq.headlessmc.api.config.Property;
 import io.github.headlesshq.headlessmc.auth.ValidatedAccount;
 import static io.github.headlesshq.headlessmc.api.config.PropertyTypes.string;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
+/**
+ * Command to log in using an offline account from config.properties.
+ * Successfully bypasses Premium checks by placing the account at the primary index.
+ */
 public class OfflineCommand extends AbstractLauncherCommand {
 
     public OfflineCommand(Launcher ctx) {
@@ -22,40 +23,32 @@ public class OfflineCommand extends AbstractLauncherCommand {
 
     @Override
     public void execute(String line, String... args) throws CommandException {
-        // 1. Get the suffix ID
+        // 1. Get the suffix ID (e.g., "1" from "offline 1")
         String id = args.length > 0 ? args[0] : "";
         String keyName = LauncherProperties.OFFLINE_ACCOUNT_PREFIX.getName() + id;
         Property<String> dynamicProperty = string(keyName);
         
-        // 2. Fetch username from config
+        // 2. Fetch username from config.properties
         String username = ctx.getConfig().get(dynamicProperty, "");
 
         if (username == null || username.isEmpty()) {
-            throw new CommandException("No offline account found for key: " + keyName);
+            throw new CommandException("No offline account found in config for key: " + keyName);
         }
 
-        // 3. Generate deterministic UUID
+        // 3. Generate a deterministic UUID for the offline player
         String uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes(StandardCharsets.UTF_8)).toString();
         
-        // 4. Create LaunchAccount (5 arguments as per Rewrite version)
+        // 4. Create the offline account. 
+        // Based on your AccountManager, we use "offline" for the token to trigger the JavaLaunchCommandBuilder logic.
+        // Format: name, uuid, token, type, xuid
         LaunchAccount offlineAccount = new LaunchAccount(username, uuid, "offline", "offline", "0");
         
-        // 5. Update AccountManager and AccountStore
-        // First, set the active account in the manager
-        ctx.getAccountManager().setCurrentAccount(offlineAccount);
-        
-        // Second, save to disk. Since save() requires a List, we fetch all current accounts and add ours
-        try {
-            List<ValidatedAccount> accounts = new ArrayList<>(ctx.getAccountManager().getAccountStore().load());
-            // Avoid duplicates: remove old account with same name if it exists
-            accounts.removeIf(acc -> acc.getName().equalsIgnoreCase(username));
-            accounts.add(offlineAccount);
-            
-            // Save the updated list back to .accounts.json
-            ctx.getAccountManager().getAccountStore().save(accounts);
-        } catch (IOException e) {
-            ctx.log("Warning: Could not save offline account to .accounts.json: " + e.getMessage());
-        }
+        // 5. Use the existing addAccount method.
+        // Your AccountManager.addAccount(ValidatedAccount) will:
+        // - Remove duplicates
+        // - Add this account at index 0 (making it the Primary Account)
+        // - Automatically call save() to update .accounts.json
+        ctx.getAccountManager().addAccount(offlineAccount);
 
         ctx.log("Successfully logged in with offline account: " + username);
     }
