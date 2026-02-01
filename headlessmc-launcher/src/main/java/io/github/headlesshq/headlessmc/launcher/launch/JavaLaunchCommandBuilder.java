@@ -83,6 +83,19 @@ public class JavaLaunchCommandBuilder {
         List<String> result = new ArrayList<>();
         result.add(java.getExecutable());
         result.addAll(Arrays.asList(config.get(LauncherProperties.JVM_ARGS, new String[0])));
+        
+        // --- ADDED: Authlib-Injector Injection Logic ---
+        if (account != null && "offline".equals(account.getToken())) {
+            File agentFile = new File(launcher.getFileManager().getBase(), "libs/authlib-injector-1.2.7.jar");
+            if (agentFile.exists()) {
+                log.info("Offline account detected, injecting authlib-injector agent...");
+                result.add("-javaagent:" + agentFile.getAbsolutePath());
+            } else {
+                log.warning("Offline account detected but authlib-injector-1.2.7.jar was not found in libs folder!");
+            }
+        }
+        // -----------------------------------------------
+
         if (config.get(LauncherProperties.SET_LIBRARY_DIR, true)) {
             result.add(SystemPropertyHelper.toSystemProperty("libraryDirectory", launcher.getMcFiles().getDir("libraries").getAbsolutePath()));
         }
@@ -110,9 +123,6 @@ public class JavaLaunchCommandBuilder {
             result.add(SystemPropertyHelper.toSystemProperty(LauncherProperties.IN_MEMORY.getName(), "true"));
         }
 
-        // we generally do not download logging, because it seems to log xml on the console... TODO: why?
-        // instead the log4j patch is on by default
-        // also old version logging, like 1.8.9 does not contain the {nolookups}, so they are unsafe anyways
         if (launcher.getConfig().get(LauncherProperties.INSTALL_LOGGING, false)) {
             Logging logging = version.getLogging();
             if (logging == null) {
@@ -138,7 +148,6 @@ public class JavaLaunchCommandBuilder {
         return result;
     }
 
-    // TODO: not the correct location but I dont care
     private void installLogging(Logging logging, File file) throws LaunchException {
         Logging.File loggingFile = logging.getFile();
         try {
@@ -168,7 +177,6 @@ public class JavaLaunchCommandBuilder {
 
     private void addIgnoreList(List<String> result) {
         if (runtime) {
-            // put headlessmc-runtime.jar on the ignoreList of the bootstraplauncher as it should be loaded by it
             for (int i = 0; i < result.size(); i++) {
                 if (SystemPropertyHelper.isSystemProperty(result.get(i))) {
                     String[] nameValue = SystemPropertyHelper.splitSystemProperty(result.get(i));
@@ -184,7 +192,6 @@ public class JavaLaunchCommandBuilder {
         }
     }
 
-    // here to make the javadoc happy
     public static class JavaLaunchCommandBuilderBuilder {
 
     }
