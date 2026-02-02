@@ -30,6 +30,7 @@ allprojects {
         mavenCentral()
         maven { url 'https://3arthqu4ke.github.io/maven' }
         maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.lenni0451.net/everything' } 
         flatDir {
             dirs "${rootProject.projectDir}/libs"
         }
@@ -61,7 +62,8 @@ allprojects {
         
         implementation 'com.google.code.gson:gson:2.11.0'
         implementation 'net.lenni0451.commons:httpclient:1.6.0'
-        implementation 'net.lenni0451.commons:gson:1.0.0'
+        implementation 'net.lenni0451.commons:gson:1.9.2'
+        implementation 'net.lenni0451.commons:core:1.6.0'
 
         jarLibsApi files("${rootProject.projectDir}/libs/MinecraftAuth-5.0.1-SNAPSHOT.jar")
 
