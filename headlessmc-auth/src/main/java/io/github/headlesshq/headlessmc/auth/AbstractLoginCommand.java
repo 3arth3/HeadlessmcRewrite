@@ -10,6 +10,8 @@ import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.java.model.MinecraftProfile;
 import net.raphimc.minecraftauth.java.model.MinecraftToken;
 import net.raphimc.minecraftauth.msa.model.MsaDeviceCode;
+// IMPORT THÊM LỚP NÀY
+import net.raphimc.minecraftauth.java.MinecraftJavaService;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -49,9 +51,11 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                 try {
                     HttpClient httpClient = httpClientFactory.get();
 
-                    // SỬA LỖI TẠI ĐÂY: Sử dụng MinecraftAuth.JAVA_EDITION
-                    // Hằng số này thay thế cho JAVA_EDITION_BUILDER trong bản 5.x
-                    MinecraftToken mcToken = MinecraftAuth.JAVA_EDITION
+                    // SỬA LỖI: Khởi tạo trực tiếp MinecraftJavaService thay vì qua MinecraftAuth
+                    MinecraftJavaService javaService = new MinecraftJavaService();
+
+                    MinecraftToken mcToken = javaService
+                            .builder()
                             .withHttpClient(httpClient)
                             .withDeviceCode(msaDeviceCode -> {
                                 ctx.log("Please go to " + msaDeviceCode.getDirectVerificationUri() 
@@ -59,7 +63,8 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                             })
                             .build();
 
-                    MinecraftProfile mcProfile = MinecraftAuth.JAVA_EDITION
+                    MinecraftProfile mcProfile = javaService
+                            .builder()
                             .withHttpClient(httpClient)
                             .getProfile(mcToken);
 
@@ -115,4 +120,4 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         return threads.stream().anyMatch(t -> threadName.equals(t.getName()));
     }
 }
-            
+        
