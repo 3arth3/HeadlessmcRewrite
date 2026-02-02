@@ -16,7 +16,6 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'com.gradleup.shadow'
 
-    // no lombok for that project, cause its doing naughty things with stubing java.lang classes
     if (project != project(':headlessmc-modlauncher')) {
         apply plugin: 'io.franzbecker.gradle-lombok'
         lombok {
@@ -33,13 +32,10 @@ allprojects {
             name '3arthMaven'
             url 'https://3arthqu4ke.github.io/maven'
         }
-
         maven {
             name 'JitPackMaven'
             url 'https://jitpack.io'
         }
-
-        // --- THÊM: Khai báo thư mục libs cục bộ cho tất cả sub-projects ---
         flatDir {
             dirs "${rootProject.projectDir}/libs"
         }
@@ -68,14 +64,13 @@ allprojects {
 
     dependencies {
         compileOnly 'org.jetbrains:annotations:26.0.2-1'
-        testCompileOnly 'org.jetbrains:annotations:26.0.2-1'
-        implementation name: 'MinecraftAuth-5.0.1-SNAPSHOT'
+        testOnly 'org.jetbrains:annotations:26.0.2-1'
+        
+        jarLibsApi name: 'MinecraftAuth-5.0.1-SNAPSHOT'
 
-        // no lombok for modlauncher cause we do bad hacks there in the java9 stub.
         if (project != project(':headlessmc-modlauncher')) {
             compileOnly 'org.projectlombok:lombok:1.18.42'
             annotationProcessor 'org.projectlombok:lombok:1.18.42'
-
             testCompileOnly 'org.projectlombok:lombok:1.18.42'
             testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
         }
@@ -91,7 +86,6 @@ allprojects {
             events "failed"
             exceptionFormat "full"
         }
-
         finalizedBy jacocoTestReport
     }
 
@@ -171,32 +165,29 @@ allprojects {
     }
 
     shadowJar {
-        // Tích hợp cả authlib-injector vào shadowJar nếu cần đóng gói chung
         configurations = [project.configurations.jarLibs, project.configurations.jarLibsApi]
         archiveClassifier.set('')
     }
 
     jar.finalizedBy(shadowJar)
+    
     def pubSuffix = System.getenv('IS_MAVEN_PUB') != null
             ? ''
             : System.getenv('GITHUB_RUN_NUMBER') != null && System.getenv('GITHUB_SHA') != null
                 ? "-${System.getenv('GITHUB_RUN_NUMBER')}-${System.getenv('GITHUB_SHA').substring(0, 7)}"
-                : project.version.endsWith('-SNAPSHOT')
-                    ? ''
-                    : ''
+                : ''
 
     publishing {
         publications {
             "${project.name.toLowerCase(Locale.ENGLISH)}"(MavenPublication) {
-                ((MavenPublication) it).groupId "${project.group}"
-                ((MavenPublication) it).artifactId "${project.archivesBaseName.toLowerCase(Locale.ENGLISH)}"
-                ((MavenPublication) it).version "${project.version}${pubSuffix}"
+                groupId "${project.group}"
+                artifactId "${project.archivesBaseName.toLowerCase(Locale.ENGLISH)}"
+                version "${project.version}${pubSuffix}"
                 components.withType(AdhocComponentWithVariants).forEach { c ->
                     c.withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
                         skip()
                     }
                 }
-
                 from components.java
             }
         }
@@ -252,18 +243,13 @@ dependencies {
 }
 
 tasks.register('jacocoRootReport', JacocoReport) {
-    description = 'Generates an aggregate report from all subprojects'
     group = 'verification'
     dependsOn(subprojects.test)
-
     additionalSourceDirs.from = files(subprojects.sourceSets.main.allSource.srcDirs)
     sourceDirectories.from = files(subprojects.sourceSets.main.allSource.srcDirs)
     classDirectories.from = files(subprojects.sourceSets.main.output)
     executionData.from = files(subprojects.jacocoTestReport.executionData)
-
-    reports {
-        xml.required.set(true)
-    }
+    reports { xml.required.set(true) }
 }
 
 tasks.register('copyJars', Copy) {
@@ -273,7 +259,6 @@ tasks.register('copyJars', Copy) {
             from(subproject.shadowJar)
         }
     }
-
     into project.file(System.getProperty('hmc.jar.dir', 'build/libs'))
 }
 
@@ -285,41 +270,27 @@ build {
 tasks.withType(JacocoReport) {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
-            def tree = fileTree(dir: it, exclude: [
+            fileTree(dir: it, exclude: [
                     '**/headlessmc/headlessmc-launcher.jar',
                     '**/headlessmc-launcher-wrapper.jar',
                     '**/headlessmc/headlessmc-runtime.jar',
                     '**/headlessmc/headlessmc-lwjgl.jar',
-                    '**/headlessmc/forge-cli.jar',
                     '**/org/objectweb/asm/**',
                     'io/github/headlesshq/headlessmc/lwjgl/agent/**',
-                    'io/github/headlesshq/headlessmc/web/**',
-                    'io/github/headlesshq/headlessmc/web/**/*.*',
-                    'io/github/headlesshq/headlessmc/web/cheerpj/**/*.*',
-                    'io/github/headlesshq/headlessmc/web/cheerpj/plugin/**',
-                    'io/github/headlesshq/headlessmc/web/cheerpj/plugin/*.*'
+                    'io/github/headlesshq/headlessmc/web/**'
             ])
-            return tree.exclude { details ->
-                return details.file.canonicalPath.contains('headlessmc-web')
-            }
         }))
     }
-
-    reports {
-        xml.required.set(true)
-    }
+    reports { xml.required.set(true) }
 }
 
 allprojects {
     afterEvaluate {
         tasks.withType(GenerateMavenPom).configureEach {
-            if (it.pom == null) {
-                return
-            }
-            it.pom.withXml {
-                asNode().dependencies.dependency.each { dependency ->
-                    if (dependency.artifactId.last().value().last() in ['junit-jupiter-api', 'junit-jupiter-engine', 'forgecli']) {
-                        assert dependency.parent().remove(dependency)
+            it.pom?.withXml {
+                asNode().dependencies.dependency.each { dep ->
+                    if (dep.artifactId.last().value().last() in ['junit-jupiter-api', 'junit-jupiter-engine']) {
+                        dep.parent().remove(dep)
                     }
                 }
             }
