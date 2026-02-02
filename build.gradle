@@ -30,7 +30,6 @@ allprojects {
         mavenCentral()
         maven { url 'https://3arthqu4ke.github.io/maven' }
         maven { url 'https://jitpack.io' }
-        // Vẫn giữ flatDir để hỗ trợ các trường hợp khác nếu cần
         flatDir {
             dirs "${rootProject.projectDir}/libs"
         }
@@ -60,8 +59,6 @@ allprojects {
         compileOnly 'org.jetbrains:annotations:26.0.2-1'
         testImplementation 'org.jetbrains:annotations:26.0.2-1'
         
-        // SỬA TẠI ĐÂY: Dùng files() để trỏ trực tiếp vào file trong thư mục libs của root project
-        // Cách này an toàn nhất, không phụ thuộc vào việc Gradle tìm kiếm trên Maven
         jarLibsApi files("${rootProject.projectDir}/libs/MinecraftAuth-5.0.1-SNAPSHOT.jar")
 
         if (project != project(':headlessmc-modlauncher')) {
