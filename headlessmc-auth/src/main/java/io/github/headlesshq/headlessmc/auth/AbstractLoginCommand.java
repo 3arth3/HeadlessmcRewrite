@@ -10,8 +10,8 @@ import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.java.model.MinecraftProfile;
 import net.raphimc.minecraftauth.java.model.MinecraftToken;
 import net.raphimc.minecraftauth.msa.model.MsaDeviceCode;
-// IMPORT THÊM LỚP NÀY
-import net.raphimc.minecraftauth.java.MinecraftJavaService;
+// SỬA IMPORT: Đây mới là lớp thực sự tồn tại trong source của bạn
+import net.raphimc.minecraftauth.step.java.StepMinecraftJava;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -51,11 +51,9 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                 try {
                     HttpClient httpClient = httpClientFactory.get();
 
-                    // SỬA LỖI: Khởi tạo trực tiếp MinecraftJavaService thay vì qua MinecraftAuth
-                    MinecraftJavaService javaService = new MinecraftJavaService();
-
-                    MinecraftToken mcToken = javaService
-                            .builder()
+                    // SỬA LỖI TẠI ĐÂY: Sử dụng StepMinecraftJava.DEFAULT_BUILDER
+                    // hoặc khởi tạo builder từ StepMinecraftJava
+                    MinecraftToken mcToken = StepMinecraftJava.builder()
                             .withHttpClient(httpClient)
                             .withDeviceCode(msaDeviceCode -> {
                                 ctx.log("Please go to " + msaDeviceCode.getDirectVerificationUri() 
@@ -63,8 +61,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                             })
                             .build();
 
-                    MinecraftProfile mcProfile = javaService
-                            .builder()
+                    MinecraftProfile mcProfile = StepMinecraftJava.builder()
                             .withHttpClient(httpClient)
                             .getProfile(mcToken);
 
@@ -84,6 +81,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         startLoginThread(thread);
     }
 
+    // ... các hàm khác giữ nguyên ...
     protected void cancelLoginProcess(String... args) throws CommandException {
         if (args.length <= 2) {
             throw new CommandException("Please specify the login process id!");
@@ -120,4 +118,4 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         return threads.stream().anyMatch(t -> threadName.equals(t.getName()));
     }
 }
-        
+            
