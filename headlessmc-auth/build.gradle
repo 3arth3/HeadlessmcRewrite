@@ -1,4 +1,4 @@
 dependencies {
     api project(':headlessmc-api')
-    implementation rootProject.configurations.jarLibsApi
+    implementation files(rootProject.configurations.jarLibsApi.files)
 }
