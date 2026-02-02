@@ -49,9 +49,9 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                 try {
                     HttpClient httpClient = httpClientFactory.get();
 
-                    // Sửa lỗi: Sử dụng MinecraftAuth.createJavaForAccount() hoặc builder()
-                    // Dựa trên mã nguồn, cách chuẩn nhất là:
-                    MinecraftToken mcToken = MinecraftAuth.createJavaBuilder()
+                    // SỬA LỖI TẠI ĐÂY: Sử dụng MinecraftAuth.JAVA_EDITION
+                    // Hằng số này thay thế cho JAVA_EDITION_BUILDER trong bản 5.x
+                    MinecraftToken mcToken = MinecraftAuth.JAVA_EDITION
                             .withHttpClient(httpClient)
                             .withDeviceCode(msaDeviceCode -> {
                                 ctx.log("Please go to " + msaDeviceCode.getDirectVerificationUri() 
@@ -59,7 +59,7 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                             })
                             .build();
 
-                    MinecraftProfile mcProfile = MinecraftAuth.createJavaBuilder()
+                    MinecraftProfile mcProfile = MinecraftAuth.JAVA_EDITION
                             .withHttpClient(httpClient)
                             .getProfile(mcToken);
 
@@ -79,7 +79,6 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         startLoginThread(thread);
     }
 
-    // ... các hàm khác giữ nguyên ...
     protected void cancelLoginProcess(String... args) throws CommandException {
         if (args.length <= 2) {
             throw new CommandException("Please specify the login process id!");
@@ -116,4 +115,4 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         return threads.stream().anyMatch(t -> threadName.equals(t.getName()));
     }
 }
-                        
+            
