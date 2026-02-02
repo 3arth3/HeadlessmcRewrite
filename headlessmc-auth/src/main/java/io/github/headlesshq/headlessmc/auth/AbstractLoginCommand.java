@@ -9,7 +9,8 @@ import net.lenni0451.commons.httpclient.HttpClient;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.java.model.MinecraftProfile;
 import net.raphimc.minecraftauth.java.model.MinecraftToken;
-import net.raphimc.minecraftauth.microsoft.MsaDeviceCode; // Sửa lỗi package ở đây
+// Sửa import đúng theo tệp MinecraftAuth_20260202.txt
+import net.raphimc.minecraftauth.step.msa.MsaDeviceCode;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -114,4 +115,3 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         return threads.stream().anyMatch(t -> threadName.equals(t.getName()));
     }
 }
-                        
