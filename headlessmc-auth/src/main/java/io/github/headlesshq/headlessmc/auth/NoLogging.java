@@ -1,8 +1,8 @@
 package io.github.headlesshq.headlessmc.auth;
 
-import net.raphimc.minecraftauth.util.logging.ILogger;
+import net.lenni0451.commons.httpclient.logging.IHttpClientLogger;
 
-public enum NoLogging implements ILogger {
+public enum NoLogging implements IHttpClientLogger {
     INSTANCE;
 
     @Override
@@ -20,4 +20,8 @@ public enum NoLogging implements ILogger {
         // NOP
     }
 
+    @Override
+    public void error(String s, Throwable t) {
+        // NOP
+    }
 }
