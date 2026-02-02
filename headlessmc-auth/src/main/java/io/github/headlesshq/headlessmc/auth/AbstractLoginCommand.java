@@ -6,22 +6,22 @@ import io.github.headlesshq.headlessmc.api.HeadlessMc;
 import io.github.headlesshq.headlessmc.api.command.AbstractCommand;
 import io.github.headlesshq.headlessmc.api.command.CommandException;
 import io.github.headlesshq.headlessmc.api.command.CommandUtil;
-import io.github.headlesshq.headlessmc.api.command.line.CommandLine;
 import net.lenni0451.commons.httpclient.HttpClient;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.java.model.MinecraftProfile;
 import net.raphimc.minecraftauth.java.model.MinecraftToken;
-import net.raphimc.minecraftauth.java.step.StepMinecraftJavaProfile;
-import net.raphimc.minecraftauth.java.step.StepMinecraftJavaToken;
-import net.raphimc.minecraftauth.msa.StepMsaCode;
-import net.raphimc.minecraftauth.msa.StepMsaDeviceCode;
-import net.raphimc.minecraftauth.msa.StepMsaToken;
+import net.raphimc.minecraftauth.step.java.StepMinecraftJavaProfile;
+import net.raphimc.minecraftauth.step.java.StepMinecraftJavaToken;
+import net.raphimc.minecraftauth.step.msa.StepMsaDeviceCode;
+import net.raphimc.minecraftauth.step.msa.StepMsaToken;
+import net.raphimc.minecraftauth.step.xbl.StepXblDeviceToken;
+import net.raphimc.minecraftauth.step.xbl.StepXblSisuTokens;
+import net.raphimc.minecraftauth.step.xbl.StepXstsToken;
 import net.raphimc.minecraftauth.util.MicrosoftConstants;
 import net.raphimc.minecraftauth.util.logging.ILogger;
 import net.raphimc.minecraftauth.util.logging.JavaConsoleLogger;
-import net.raphimc.minecraftauth.xbl.StepXblDeviceToken;
-import net.raphimc.minecraftauth.xbl.StepXblSisuTokens;
-import net.raphimc.minecraftauth.xbl.StepXstsToken;
+import net.raphimc.minecraftauth.xbl.model.XblSisuTokens;
+import net.raphimc.minecraftauth.xbl.model.XblToken;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -64,22 +64,22 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                     ILogger logger = getLogger(args);
 
                     StepMsaDeviceCode.MsaDeviceCodeCallback callback = msaDeviceCode -> 
-                        ctx.log("Go to " + msaDeviceCode.getDirectVerificationUri());
+                        ctx.log("Please go to " + msaDeviceCode.getDirectVerificationUri() + " and enter the code to login.");
 
-                    var msaCode = new StepMsaDeviceCode().getFromInput(logger, httpClient, callback);
-                    var msaToken = new StepMsaToken().apply(logger, httpClient, msaCode);
-                    var xblToken = new StepXblDeviceToken("Win32").apply(logger, httpClient, msaToken);
-                    var sisuTokens = new StepXblSisuTokens(MicrosoftConstants.JAVA_XSTS_RELYING_PARTY).apply(logger, httpClient, xblToken);
-                    var xstsToken = new StepXstsToken(MicrosoftConstants.JAVA_XSTS_RELYING_PARTY).apply(logger, httpClient, sisuTokens.getAuthorizingToken());
-                    var mcToken = new StepMinecraftJavaToken().apply(logger, httpClient, xstsToken);
-                    var mcProfile = new StepMinecraftJavaProfile().apply(logger, httpClient, mcToken);
+                    StepMsaDeviceCode.MsaDeviceCode msaCode = new StepMsaDeviceCode().getFromInput(logger, httpClient, callback);
+                    MinecraftToken msaToken = new StepMsaToken().apply(logger, httpClient, msaCode);
+                    XblToken xblToken = new StepXblDeviceToken("Win32").apply(logger, httpClient, msaToken);
+                    XblSisuTokens sisuTokens = new StepXblSisuTokens(MicrosoftConstants.JAVA_XSTS_RELYING_PARTY).apply(logger, httpClient, xblToken);
+                    XblToken xstsToken = new StepXstsToken(MicrosoftConstants.JAVA_XSTS_RELYING_PARTY).apply(logger, httpClient, sisuTokens.getAuthorizingToken());
+                    MinecraftToken mcToken = new StepMinecraftJavaToken().apply(logger, httpClient, xstsToken);
+                    MinecraftProfile mcProfile = new StepMinecraftJavaProfile().apply(logger, httpClient, mcToken);
 
                     onSuccessfulLogin(mcProfile, mcToken);
                 } catch (InterruptedException e) {
                     ctx.log("Login process cancelled.");
                 } catch (Exception e) {
                     ctx.log("Login failed: " + e.getMessage());
-                    log.error(e);
+                    log.error("Authentication error", e);
                 } finally {
                     threads.remove(this);
                 }
@@ -132,4 +132,4 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         MinecraftAuth.LOGGER = new JavaConsoleLogger(java.util.logging.Logger.getLogger("MinecraftAuth"));
     }
 }
-        
+            
