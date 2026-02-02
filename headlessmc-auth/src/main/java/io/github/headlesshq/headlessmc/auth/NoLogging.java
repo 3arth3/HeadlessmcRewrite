@@ -6,22 +6,22 @@ public enum NoLogging implements IHttpClientLogger {
     INSTANCE;
 
     @Override
-    public void info(String s) {
+    public void info(String message) {
         // NOP
     }
 
     @Override
-    public void warn(String s) {
+    public void warn(String message) {
         // NOP
     }
 
     @Override
-    public void error(String s) {
+    public void error(String message) {
         // NOP
     }
 
     @Override
-    public void error(String s, Throwable t) {
+    public void error(String message, Throwable cause) {
         // NOP
     }
 }
