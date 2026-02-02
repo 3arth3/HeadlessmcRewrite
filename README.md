@@ -14,4 +14,3 @@
 
 # warning : 
 - I think it's not advisable to use the jar file in this project because it's prone to any kind of risk if you use it as a bot for a Minecraft server.
-- HeadlessMC has added a crack account function to help players (without a crack) escape traps (chicken lag, etc.) by using the /kill command on HeadlessMC to avoid GPU congestion.
