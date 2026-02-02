@@ -13,7 +13,8 @@ import net.raphimc.minecraftauth.msa.model.MsaApplicationConfig;
 import net.raphimc.minecraftauth.msa.model.MsaDeviceCode;
 import net.raphimc.minecraftauth.msa.model.MsaToken;
 import net.raphimc.minecraftauth.msa.request.MsaDeviceCodeRequest;
-import net.raphimc.minecraftauth.msa.request.MsaDeviceTokenRequest;
+// SỬA TÊN LỚP TẠI ĐÂY: MsaDeviceCodeTokenRequest thay vì MsaDeviceTokenRequest
+import net.raphimc.minecraftauth.msa.request.MsaDeviceCodeTokenRequest;
 import net.raphimc.minecraftauth.xbl.data.XblConstants;
 import net.raphimc.minecraftauth.xbl.model.XblUserToken;
 import net.raphimc.minecraftauth.xbl.model.XblXstsToken;
@@ -59,38 +60,32 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                 try {
                     HttpClient httpClient = httpClientFactory.get();
 
-                    // 1. Lấy Device Code
                     MsaDeviceCode deviceCode = httpClient.executeAndHandle(new MsaDeviceCodeRequest(JAVA_CONFIG));
                     ctx.log("Please go to " + deviceCode.getDirectVerificationUri() + " and enter the code: " + deviceCode.getUserCode());
 
-                    // 2. Chờ lấy MSA Token (Polling)
                     MsaToken msaToken = null;
-                    while (msaToken == null) {
+                    while (msaToken == null && !isInterrupted()) {
                         try {
-                            msaToken = httpClient.executeAndHandle(new MsaDeviceTokenRequest(JAVA_CONFIG, deviceCode));
+                            // SỬA TẠI ĐÂY: Sử dụng MsaDeviceCodeTokenRequest
+                            msaToken = httpClient.executeAndHandle(new MsaDeviceCodeTokenRequest(JAVA_CONFIG, deviceCode));
                         } catch (Exception e) {
-                            Thread.sleep(5000); // Chờ 5s rồi thử lại
+                            // Thư viện sẽ ném Exception nếu người dùng chưa nhập code xong, ta chờ 5s
+                            Thread.sleep(5000);
                         }
                     }
 
-                    // 3. Đổi MSA Token lấy Xbox User Token
-                    XblUserToken xblUserToken = httpClient.executeAndHandle(new XblUserAuthenticateRequest(JAVA_CONFIG, msaToken));
+                    if (msaToken == null) return;
 
-                    // 4. Đổi Xbox User Token lấy XSTS Token cho Minecraft Java
+                    XblUserToken xblUserToken = httpClient.executeAndHandle(new XblUserAuthenticateRequest(JAVA_CONFIG, msaToken));
                     XblXstsToken xstsToken = httpClient.executeAndHandle(new XblXstsAuthorizeRequest(null, xblUserToken, null, XblConstants.JAVA_XSTS_RELYING_PARTY));
 
-                    // Lưu ý: Các bước tiếp theo cần các Request của Minecraft Java (thường nằm ở file 31-50)
-                    // Nếu bạn có MinecraftJavaTokenRequest, hãy dùng nó tại đây.
-                    
-                    ctx.log("Login steps for XSTS successful. Waiting for final Java profile steps...");
+                    ctx.log("Login steps for XSTS successful. (Final Minecraft Java steps require additional request files)");
 
+                } catch (InterruptedException e) {
+                    ctx.log("Login process cancelled.");
                 } catch (Exception e) {
-                    if (e instanceof InterruptedException) {
-                        ctx.log("Login process cancelled.");
-                    } else {
-                        ctx.log("Login failed: " + e.getMessage());
-                        log.error("Authentication error", e);
-                    }
+                    ctx.log("Login failed: " + e.getMessage());
+                    log.error("Authentication error", e);
                 } finally {
                     threads.remove(this);
                 }
@@ -135,4 +130,4 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         return threads.stream().anyMatch(t -> threadName.equals(t.getName()));
     }
 }
-            
+                
