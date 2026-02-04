@@ -40,6 +40,20 @@ public class ValidatedAccount implements HasName {
         this.xuid = xuid;
     }
 
+    // add getter
+    public ValidatedAccount getSession() {
+        return (profile != null && token != null) ? this : null;
+    }
+
+    // add getter
+    public MinecraftProfile getMcProfile() {
+        return profile;
+    }
+
+    public MinecraftToken getMcToken() {
+        return token;
+    }
+
     @Override
     public String getName() {
         return name;
@@ -72,3 +86,4 @@ public class ValidatedAccount implements HasName {
         }
     }
 }
+                
