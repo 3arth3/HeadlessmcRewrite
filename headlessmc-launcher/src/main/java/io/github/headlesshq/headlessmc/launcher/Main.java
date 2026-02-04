@@ -54,15 +54,19 @@ public final class Main {
     private static void startCommandLoop(Launcher launcher) {
         log.info("Terminal initialized (Scanner-mode). Type 'exit' to quit.");
         Scanner scanner = new Scanner(System.in);
+        
+        var commandContext = launcher.getCommandLine().getCommandContext();
+        
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine().trim();
             if (line.equalsIgnoreCase("exit") || line.equalsIgnoreCase("quit")) {
                 break;
             }
             if (!line.isEmpty()) {
-                // call
-                launcher.getCommandLine().execute(line);
+                
+                commandContext.execute(line);
             }
+            System.out.print("> "); 
         }
     }
 
@@ -81,4 +85,4 @@ public final class Main {
         }
     }
 }
-            
+                
