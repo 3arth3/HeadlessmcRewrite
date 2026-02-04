@@ -27,11 +27,15 @@ public class LoginCommandTest {
                 if (command instanceof LoginCommand) {
                     LoginCommand loginCommand = (LoginCommand) command;
                     
-                    MinecraftProfile profile = new MinecraftProfile(UUID.randomUUID(), "DummyName", new ArrayList<>());
-                    MinecraftToken token = new MinecraftToken("dummy-token", System.currentTimeMillis() + 3600000L);
+                    // UUID , name
+                    MinecraftProfile profile = new MinecraftProfile(UUID.randomUUID(), "DummyName");
+                    
+                    // (long expiry, String token, String refreshToken)
+                    long expiry = System.currentTimeMillis() + 3600000L;
+                    MinecraftToken token = new MinecraftToken(expiry, "dummy-token", "dummy-refresh");
                     
                     loginCommand.onSuccessfulLogin(profile, token);
-                
+                    
                     assertTrue(launcher.getAccountManager().getAccounts().stream()
                             .anyMatch(acc -> acc.getProfile() != null && acc.getProfile().getId().equals(profile.getId())));
                     
@@ -45,4 +49,3 @@ public class LoginCommandTest {
         }
     }
 }
-                                                                                
