@@ -60,7 +60,8 @@ public final class Main {
                 break;
             }
             if (!line.isEmpty()) {
-                launcher.getCommandLine().execute(line, launcher.getHeadlessMc());
+                // call
+                launcher.getCommandLine().execute(line);
             }
         }
     }
@@ -80,3 +81,4 @@ public final class Main {
         }
     }
 }
+            
