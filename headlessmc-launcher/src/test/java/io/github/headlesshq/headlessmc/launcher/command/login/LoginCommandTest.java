@@ -4,8 +4,8 @@ import io.github.headlesshq.headlessmc.api.command.Command;
 import io.github.headlesshq.headlessmc.launcher.Launcher;
 import io.github.headlesshq.headlessmc.launcher.LauncherMock;
 import io.github.headlesshq.headlessmc.launcher.command.LaunchContext;
-import net.raphimc.minecraftauth.step.java.StepMCProfile;
-import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
+import net.raphimc.minecraftauth.java.model.MinecraftProfile;
+import net.raphimc.minecraftauth.java.model.MinecraftToken;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -26,9 +26,15 @@ public class LoginCommandTest {
             for (Command command : launcher.getCommandLine().getCommandContext()) {
                 if (command instanceof LoginCommand) {
                     LoginCommand loginCommand = (LoginCommand) command;
-                    StepFullJavaSession.FullJavaSession session = new StepFullJavaSession.FullJavaSession(new StepMCProfile.MCProfile(UUID.randomUUID(), "", "", null), null);
-                    loginCommand.onSuccessfulLogin(session);
-                    assertTrue(launcher.getAccountManager().getAccounts().stream().anyMatch(acc -> acc.getSession() == session));
+                    
+                    MinecraftProfile profile = new MinecraftProfile(UUID.randomUUID(), "DummyName", new ArrayList<>());
+                    MinecraftToken token = new MinecraftToken("dummy-token", System.currentTimeMillis() + 3600000L);
+                    
+                    loginCommand.onSuccessfulLogin(profile, token);
+                
+                    assertTrue(launcher.getAccountManager().getAccounts().stream()
+                            .anyMatch(acc -> acc.getProfile() != null && acc.getProfile().getId().equals(profile.getId())));
+                    
                     ran = true;
                 }
             }
@@ -38,5 +44,5 @@ public class LoginCommandTest {
             new ArrayList<>(launcher.getAccountManager().getAccounts()).forEach(acc -> launcher.getAccountManager().removeAccount(acc));
         }
     }
-
 }
+                                                                                
