@@ -10,8 +10,9 @@ import io.github.headlesshq.headlessmc.launcher.util.URLs;
 import net.lenni0451.commons.httpclient.HttpClient;
 import net.lenni0451.commons.httpclient.requests.impl.GetRequest;
 import net.raphimc.minecraftauth.MinecraftAuth;
+import net.raphimc.minecraftauth.java.model.MinecraftProfile;
+import net.raphimc.minecraftauth.java.model.MinecraftToken;
 import net.raphimc.minecraftauth.responsehandler.MinecraftResponseHandler;
-import net.raphimc.minecraftauth.step.java.session.StepFullJavaSession;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
@@ -26,19 +27,22 @@ import java.util.List;
 public class AccountValidator {
     private static final URL URL = URLs.url("https://api.minecraftservices.com/entitlements/mcstore");
 
-    public ValidatedAccount validate(StepFullJavaSession.FullJavaSession session) throws AuthException {
-        log.debug("Validating session " + session.getMcProfile().getName() + " : " + session.getMcProfile().getId());
+    // Sửa tham số truyền vào từ FullJavaSession thành Profile và Token
+    public ValidatedAccount validate(MinecraftProfile profile, MinecraftToken token) throws AuthException {
+        log.debug("Validating session " + profile.getName() + " : " + profile.getId());
         try {
             HttpClient httpClient = MinecraftAuth.createHttpClient();
             GetRequest getRequest = new GetRequest(URL);
-            getRequest.appendHeader("Authorization", "Bearer " + session.getMcProfile().getMcToken().getAccessToken());
+            
+            // Sửa cách lấy Access Token: token.getToken() trả về chuỗi JWT String
+            getRequest.appendHeader("Authorization", "Bearer " + token.getToken());
+            
             JsonObject je = httpClient.execute(getRequest, new MinecraftResponseHandler());
             log.debug(je.toString());
 
             Entitlements entitlements = JsonUtil.GSON.fromJson(je, Entitlements.class);
             String xuid = null;
             for (Entitlements.Item item : entitlements.getItems()) {
-                // TODO: is "product_minecraft" really also fine? it also contains the same xuid so it should be?
                 if ("game_minecraft".equals(item.getName()) || "product_minecraft".equals(item.getName())) {
                     xuid = item.parseXuid();
                     break;
@@ -49,10 +53,11 @@ public class AccountValidator {
                 throw new AuthException("This account does not own Minecraft!");
             }
 
-            return new ValidatedAccount(session, xuid);
+            // Trả về ValidatedAccount mới với cấu trúc (profile, token, xuid)
+            return new ValidatedAccount(profile, token, xuid);
         } catch (IOException | JsonParseException e) {
-            log.error("Failed to validate " + session.getMcProfile().getName(), e);
-            throw new AuthException("Failed to validate " + session.getMcProfile().getName() + ": " + e.getMessage());
+            log.error("Failed to validate " + profile.getName(), e);
+            throw new AuthException("Failed to validate " + profile.getName() + ": " + e.getMessage());
         }
     }
 
@@ -77,7 +82,6 @@ public class AccountValidator {
             private String signature;
 
             public String parseXuid() throws AuthException, JsonSyntaxException {
-                // TODO: also verify signature?
                 String[] split = signature.split("\\.");
                 if (split.length != 3) {
                     throw new AuthException("Invalid JWT " + signature);
@@ -94,5 +98,5 @@ public class AccountValidator {
             }
         }
     }
-
 }
+        
