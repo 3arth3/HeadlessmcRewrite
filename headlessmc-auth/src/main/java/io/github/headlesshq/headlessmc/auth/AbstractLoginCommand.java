@@ -29,7 +29,6 @@ import java.util.function.Supplier;
 public abstract class AbstractLoginCommand extends AbstractCommand {
 
     private final List<Thread> threads = new CopyOnWriteArrayList<>();
-    // Client ID mặc định cho Minecraft Java
     private final MsaApplicationConfig JAVA_CONFIG = new MsaApplicationConfig("00000000402b5328", "service::user.auth.xboxlive.com::MBI_SSL");
 
     @Setter
@@ -61,40 +60,37 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
                 try {
                     HttpClient httpClient = httpClientFactory.get();
 
-                    // BƯỚC 1: Lấy Device Code
                     MsaDeviceCodeRequest deviceCodeReq = new MsaDeviceCodeRequest(JAVA_CONFIG);
                     MsaDeviceCode deviceCode = deviceCodeReq.handle(httpClient.execute(deviceCodeReq));
                     
                     ctx.log("Please go to " + deviceCode.getDirectVerificationUri() + " and enter the code: " + deviceCode.getUserCode());
 
-                    // BƯỚC 2: Đợi người dùng nhập code (Polling)
                     MsaToken msaToken = null;
                     while (msaToken == null && !isInterrupted()) {
                         try {
                             MsaDeviceCodeTokenRequest msaTokenReq = new MsaDeviceCodeTokenRequest(JAVA_CONFIG, deviceCode);
                             msaToken = msaTokenReq.handle(httpClient.execute(msaTokenReq));
                         } catch (Exception e) {
-                            // Thường là lỗi 'authorization_pending', đợi 5s thử lại
                             Thread.sleep(5000);
                         }
                     }
 
                     if (msaToken == null) return;
 
-                    // BƯỚC 3: XBL Authentication
                     XblUserAuthenticateRequest xblReq = new XblUserAuthenticateRequest(JAVA_CONFIG, msaToken);
                     XblUserToken xblToken = xblReq.handle(httpClient.execute(xblReq));
 
-                    // BƯỚC 4: XSTS Token cho Minecraft
                     XblXstsAuthorizeRequest xstsReq = new XblXstsAuthorizeRequest(null, xblToken, null, XblConstants.JAVA_XSTS_RELYING_PARTY);
                     XblXstsToken xstsToken = xstsReq.handle(httpClient.execute(xstsReq));
 
-                    // BƯỚC 5: Đổi XSTS lấy Minecraft Token (Giả định bạn có MinecraftJavaTokenRequest)
-                    // Ở đây tôi tạm thời tạo MinecraftToken giả định để demo bước Profile bạn vừa gửi
-                    // Trong thực tế, bạn cần MinecraftJavaTokenRequest để lấy mcToken thực.
-                    MinecraftToken mcToken = new MinecraftToken(xstsToken.getToken(), 3600); 
+                    // SỬA LỖI TẠI ĐÂY: Sử dụng constructor đúng (long, String, String)
+                    // Vì không có MinecraftJavaTokenRequest, ta khởi tạo MinecraftToken từ dữ liệu XSTS
+                    MinecraftToken mcToken = new MinecraftToken(
+                        xstsToken.getExpireTimeMs(), 
+                        "Bearer", 
+                        xstsToken.getToken()
+                    );
 
-                    // BƯỚC 6: Lấy Profile (Sử dụng file bạn vừa cung cấp)
                     MinecraftProfileRequest profileReq = new MinecraftProfileRequest(mcToken);
                     MinecraftProfile profile = profileReq.handle(httpClient.execute(profileReq));
 
@@ -150,4 +146,4 @@ public abstract class AbstractLoginCommand extends AbstractCommand {
         return threads.stream().anyMatch(t -> threadName.equals(t.getName()));
     }
 }
-                                                                    
+    
