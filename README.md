@@ -16,4 +16,16 @@
 - I think it's not advisable to use the jar file in this project because it's prone to any kind of risk if you use it as a bot for a Minecraft server.
 
 # Instructions for use:
-- Let's leave it for later because I think this project won't succeed, lol.
+- I'll give an example on Linux using headlessmc.
+- First, you need to download the source code of this repository and check it to ensure it doesn't contain any malware. After checking, you will have a JAR file. Choose any JAR file that is compatible with your operating system.
+- java -jar <name jar > (You need OpenJDK 21 to run HeadlessMC.)
+- run download 1.21.1
+- ctrl + c to exit the launcher
+- cd /HEADLESSMC/config.properties
+- nano config.properities
+- input: hmc.offline.account1=name_account
+- ctrl + o , ctrl + x
+- cd
+- java -jar <name_jar>
+- on headlessmc , run offline 1
+-> successful.
