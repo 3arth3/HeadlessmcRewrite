@@ -29,3 +29,7 @@
 - java -jar <name_jar>
 - on headlessmc , run offline 1
 -> successful.
+
+# Thanks : 
+- 3arthqu4ke : The lead developer, along with his collaborators, created headlessmc.
+- uid22 / 3 : Added offline functionality to allow playing Minecraft on servers using an offline account.
