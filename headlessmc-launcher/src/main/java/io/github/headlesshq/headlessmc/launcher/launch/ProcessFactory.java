@@ -80,7 +80,6 @@ public class ProcessFactory {
 
         val dir = new File(launcher.getConfig().get(LauncherProperties.GAME_DIR, launcher.getGameDir(version).getPath()));
         log.info("Game will run in " + dir);
-        //noinspection ResultOfMethodCallIgnored
         dir.mkdirs();
         autoDownloadSpecifics(options, version, dir.toPath());
         if (options.isPrepare()) {
@@ -91,7 +90,7 @@ public class ProcessFactory {
             launcher.getCommandLine().close();
         }
 
-        System.gc(); // suggest JVM to clean up before running mc
+        System.gc();
         if (options.isInMemory()) {
             inMemoryLaunch(new InMemoryLauncher(options, commandBuilder, version, launcher.getJavaService().getCurrent()));
             return null;
@@ -113,12 +112,20 @@ public class ProcessFactory {
 
     protected JavaLaunchCommandBuilder.JavaLaunchCommandBuilderBuilder configureCommandBuilder(
             LaunchOptions options, Version version, List<String> classpath, FileManager natives) {
+        
+        List<String> jvmArgs = new ArrayList<>(options.getAdditionalJvmArgs());
+        jvmArgs.add("-Djava.awt.headless=true");
+        jvmArgs.add("-Dorg.lwjgl.librarypath=/dev/null");
+        jvmArgs.add("-Djna.nosys=true");
+        jvmArgs.add("-Doshi.os.linux.allowZeroId=true");
+        jvmArgs.add("-Dsun.java2d.opengl=false");
+
         return JavaLaunchCommandBuilder
                 .builder()
                 .account(options.getAccount())
                 .classpath(classpath)
                 .os(os)
-                .jvmArgs(options.getAdditionalJvmArgs())
+                .jvmArgs(jvmArgs)
                 .gameArgs(options.getAdditionalGameArgs())
                 .natives(natives.getBase().getAbsolutePath())
                 .runtime(options.isRuntime())
@@ -141,11 +148,6 @@ public class ProcessFactory {
         if (runtimeJar == null) {
             throw new IllegalStateException("Failed to find RuntimeJar in classpath " + classpath);
         }
-        // add RuntimeJar as the first jar on the classpath
-        // this makes java look it up for libraries first
-        // really important because forge provides an incompatible version of JLine.
-        // TODO: this works, but is it really something we want to trust?
-        //  bring over the VersionAgnosticJLineCommandLineReader from hmc-specifics?
         classpath.add(0, runtimeJar);
     }
 
@@ -173,7 +175,6 @@ public class ProcessFactory {
 
     protected List<Target> processLibraries(LaunchOptions options, Version version, FileManager dlls) throws IOException {
         log.debug("Processing libraries...");
-        // TODO: proper features
         val features = Features.EMPTY;
         val targets = new ArrayList<Target>(version.getLibraries().size());
         Set<String> libPaths = new HashSet<>();
@@ -260,9 +261,6 @@ public class ProcessFactory {
         new AssetsDownloader(options.getLauncher().getCommandLine(), downloadService, config.getConfig(), files, version.getAssetsUrl(), version.getAssets()).download();
     }
 
-    /**
-     * @return a FileManager representing the .minecraft directory.
-     */
     public FileManager getFiles() {
         return config.getMcFiles();
     }
@@ -270,7 +268,7 @@ public class ProcessFactory {
     private void debugCommand(List<String> command, JavaLaunchCommandBuilder commandBuilder) {
         StringBuilder commandDebugBuilder = new StringBuilder();
         if (!command.isEmpty()) {
-            commandDebugBuilder.append("\"").append(command.get(0)).append("\" "); // escape java path
+            commandDebugBuilder.append("\"").append(command.get(0)).append("\" ");
         }
 
         for (int i = 1; i < command.size(); i++) {
