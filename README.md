@@ -14,6 +14,7 @@
 
 # warning : 
 - I think it's not advisable to use the jar file in this project because it's prone to any kind of risk if you use it as a bot for a Minecraft server.
+- Under maintenance.
 
 # Instructions for use:
 - Run headlessmc in your terminal, download the vanilla and fabric versions you want, then press Ctrl + C.Run the command `cd headlessMc`, which will contain `config.properties`.Open it with nano and add hmc.offline.account1=your_account_name, Then save and exit the folder. Restart the jar and burn offline 1 (or another one) and play.
